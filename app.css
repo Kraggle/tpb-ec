@@ -1,0 +1,43 @@
+.magnet {
+  position: relative;
+  width: 12px;
+  float: right;
+  cursor: pointer; }
+  .magnet .loader {
+    position: absolute;
+    top: -4px;
+    left: -4px; }
+  .magnet.big {
+    float: initial;
+    width: 18px; }
+    .magnet.big .loader {
+      width: 22px;
+      height: 22px; }
+  .magnet::before {
+    content: url("https://the-division-map.com/images/icon-magnet.svg?v=0.3"); }
+  .magnet.all {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 30px; }
+
+.seen .magnet::before {
+  content: url("https://the-division-map.com/images/icon-magnet-disable.svg?v=0.3"); }
+
+.app-message-box {
+  position: fixed;
+  left: 180px;
+  right: 0;
+  bottom: -80px;
+  height: 80px;
+  background: #de6e6e;
+  line-height: 80px;
+  color: white;
+  text-align: center;
+  font-size: 16pt;
+  transition: all 1.2s ease; }
+  .app-message-box.active {
+    bottom: 0;
+    transition: all .7s ease; }
+
+/*# sourceMappingURL=app.css.map */

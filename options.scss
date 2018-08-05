@@ -1,0 +1,177 @@
+$background: #252125;
+$orange: #cd8a37;
+$red: #9f2828;
+
+@font-face {
+	font-family: 'Eras';
+	src: url(resources/ERASMD.TTF) format('truetype');
+}
+
+body {
+	font-family: 'Eras', sans-serif;
+	background: $background;
+	padding: 40px;
+}
+
+.logo {
+	display: block;
+	width: 600px;
+	margin: auto;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: 100%;
+	margin-top: -20px;
+}
+
+.container {
+	margin: auto;
+	margin-top: 20px;
+	color: white;
+	font-size:  14px;
+	display: flex;
+	max-width: 1000px;
+	
+	>div {
+		display: inline-block;
+	}
+	
+	.left {
+		width: 300px;
+		min-width: 300px;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.right {
+		flex-grow: 2;
+	}
+	
+	.options {
+		flex-grow: 2;
+	}
+}
+
+.title {
+	position: relative;
+	font-size: 18px;
+	font-weight: bold;
+	display: block;
+	margin: 0 0 10px;
+}
+
+form.radios.quality {
+	margin: 5px;
+}
+
+p.description {
+	font-size: 12px;
+	color: #bbbbbb;
+	margin: 10px 0;
+}
+
+span.status {
+	padding-left: 25px;
+	color: green;
+}
+
+#add-proxy {
+	font-size: 14px;
+	line-height: 20px;
+	font-weight: initial;
+	display: inline-block;
+	position: absolute;
+	right: 0;
+	color: $orange;
+	cursor: pointer;
+	transition: all ease .4s;
+	
+	&:hover {
+		color: lighten($orange, 30%);
+		text-shadow: 0 0 2px white;
+	}
+}
+
+.divider {
+	background-color: #444;
+	margin: 20px;
+	border: 1px solid #111;
+	
+	&.vertical {
+		width: 1px;	
+		min-width: 1px;	
+	}
+	
+	&.horizontal {
+		height: 1px;
+		margin: 20px 5px;
+	}
+}
+
+#proxies {
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	
+	.proxy-box {
+		position: relative;
+		transition: all .4s;
+		background-color: $red;
+		min-width: 300px;
+		flex-grow: 1;
+		
+		&:hover {
+			.proxy {
+				background-color: lighten($background, 10%);
+				width: calc(100% - 85px);
+			}
+		}
+	}
+	
+	.proxy {
+		transition: all .4s;
+		background-color: $background;
+		border: none;
+		font-size: 16px;
+		color: white;
+		padding: 10px 0 10px 10px;
+		width: calc(100% - 10px);
+		position: relative;
+		font-family: 'Eras', sans-serif;
+		
+		&:focus {
+			outline: none;
+			background-color: lighten($background, 10%);
+		}
+	}
+	
+	.delete {
+		position: absolute;
+		right: 0;
+		top: 0;
+		line-height: 38px;
+		padding: 0 10px;
+		cursor: pointer;
+	}
+}
+
+#save {
+	text-align: center;
+	font-size: 20px;
+	font-weight: bold;
+	transition: all ease .4s;
+	line-height: 30px;
+	color: #444;
+	border-radius: 4px;
+	cursor: default;
+	
+	&.active {
+		background-color: darken($orange, 20%);
+		color: white;
+		cursor: pointer;
+	
+		&:hover {
+			background-color: darken($orange, 10%);
+		}
+	}
+}

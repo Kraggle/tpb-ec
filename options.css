@@ -1,0 +1,132 @@
+@font-face {
+  font-family: 'Eras';
+  src: url(resources/ERASMD.TTF) format("truetype"); }
+body {
+  font-family: 'Eras', sans-serif;
+  background: #252125;
+  padding: 40px; }
+
+.logo {
+  display: block;
+  width: 600px;
+  margin: auto;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100%;
+  margin-top: -20px; }
+
+.container {
+  margin: auto;
+  margin-top: 20px;
+  color: white;
+  font-size: 14px;
+  display: flex;
+  max-width: 1000px; }
+  .container > div {
+    display: inline-block; }
+  .container .left {
+    width: 300px;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column; }
+  .container .right {
+    flex-grow: 2; }
+  .container .options {
+    flex-grow: 2; }
+
+.title {
+  position: relative;
+  font-size: 18px;
+  font-weight: bold;
+  display: block;
+  margin: 0 0 10px; }
+
+form.radios.quality {
+  margin: 5px; }
+
+p.description {
+  font-size: 12px;
+  color: #bbbbbb;
+  margin: 10px 0; }
+
+span.status {
+  padding-left: 25px;
+  color: green; }
+
+#add-proxy {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: initial;
+  display: inline-block;
+  position: absolute;
+  right: 0;
+  color: #cd8a37;
+  cursor: pointer;
+  transition: all ease .4s; }
+  #add-proxy:hover {
+    color: #ecd2b1;
+    text-shadow: 0 0 2px white; }
+
+.divider {
+  background-color: #444;
+  margin: 20px;
+  border: 1px solid #111; }
+  .divider.vertical {
+    width: 1px;
+    min-width: 1px; }
+  .divider.horizontal {
+    height: 1px;
+    margin: 20px 5px; }
+
+#proxies {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between; }
+  #proxies .proxy-box {
+    position: relative;
+    transition: all .4s;
+    background-color: #9f2828;
+    min-width: 300px;
+    flex-grow: 1; }
+    #proxies .proxy-box:hover .proxy {
+      background-color: #403940;
+      width: calc(100% - 85px); }
+  #proxies .proxy {
+    transition: all .4s;
+    background-color: #252125;
+    border: none;
+    font-size: 16px;
+    color: white;
+    padding: 10px 0 10px 10px;
+    width: calc(100% - 10px);
+    position: relative;
+    font-family: 'Eras', sans-serif; }
+    #proxies .proxy:focus {
+      outline: none;
+      background-color: #403940; }
+  #proxies .delete {
+    position: absolute;
+    right: 0;
+    top: 0;
+    line-height: 38px;
+    padding: 0 10px;
+    cursor: pointer; }
+
+#save {
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  transition: all ease .4s;
+  line-height: 30px;
+  color: #444;
+  border-radius: 4px;
+  cursor: default; }
+  #save.active {
+    background-color: #7e5420;
+    color: white;
+    cursor: pointer; }
+    #save.active:hover {
+      background-color: #a76f2a; }
+
+/*# sourceMappingURL=options.css.map */
