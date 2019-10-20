@@ -29,7 +29,7 @@ const newTab = (url) => {
 	})
 }
 
-var item;
+var item, CORS = 'https://cors-anywhere.herokuapp.com/';
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
@@ -41,6 +41,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 				getLink(item, 'm720'), getLink(item, 'm720HEVC'))
 			.done(function (a1, a2, a3, a4, a5) {
 
+				console.log(item);
+
 				sendResponse({
 					item: item
 				})
@@ -49,7 +51,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	} else if (request.url) {
 
 		$.ajax({
-			url: request.url
+			url: CORS + request.url
 		}).done(function (a) {
 
 			sendResponse({
@@ -61,6 +63,23 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 				error: true
 			});
 		});
+
+	} else if (request.proxies) {
+
+		$.ajax({
+			url: `${CORS}https://proxybaylist.org/`,
+		}).done(function (a) {
+
+			var html = $.parseHTML(a);
+			var proxies = [];
+
+			$("#torrents div p a", html).each(function (i, el) {
+				proxies.push($(this).attr("href").replace(/\/$/, ''));
+			});
+
+			sendResponse(proxies);
+		});
+
 	}
 
 	return true;
@@ -70,8 +89,10 @@ function getLink(item, part) {
 	// console.log(item[part], isValid(item[part]));
 
 	return isValid(item[part]) ? $.ajax({
-		url: item[part]
+		url: CORS + item[part]
 	}).done(function (data) {
+
+		console.log(stripShit(data));
 
 		item[part] = $.type(data) === 'string' ? $('.download a', stripShit(data)).first().attr('href') : '';
 

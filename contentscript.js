@@ -3,7 +3,7 @@ var _e = {
 		day: {}
 	},
 	changed = false,
-	urls = ['https://pirateproxy.men', 'https://pirateproxy.bid', 'https://tpb.review', 'https://proxytorrent.xyz', 'https://tpbproxy.in', 'https://tpbmirror.org', 'https://thepiratebayproxy.net', 'https://piratesbay.me', 'https://ukpirateproxy.com', 'https://tpbunblock.net', 'https://unblocktpb.org', 'https://piratebaypirate.com', 'https://proxybay.life', 'https://piratebays.me', 'https://thepiratebay.click', 'https://fastpirate.link', 'https://gameofbay.eu', 'https://piratebays.be', 'https://ukbay.me', 'https://tpbship.org', 'https://opentpb.com', 'https://uktpbmirror.pw', 'https://fastbay.net', 'https://unblocktpb.pro', 'https://uktpbproxy.info', 'https://pirateproxy.sh', 'https://thepirateproxy.ws'],
+	urls,
 	options,
 	msgTimer,
 	epList,
@@ -17,6 +17,18 @@ var _e = {
 	gettingMagnet = false;
 
 $(function () {
+
+	chrome.runtime.sendMessage({
+		proxies: true
+	}, function (data) {
+		urls = data;
+
+		// reset the index to start traversing the proxies
+		// at as we have a new list to work through
+		chrome.storage.sync.set({
+			index: 0
+		});
+	});
 
 	addListener();
 
@@ -317,18 +329,16 @@ function getMagnet(e) {
 		item = epList[$(this).attr('index')],
 		loader = item.get().find('.loader');
 
-	console.log(item);
-
 	chrome.storage.sync.get({
 		quality: 1,
 		hevc: true,
 		check: true,
-		urls: urls,
+		// urls: urls,
 		index: 0
 	}, function (items) {
 		options = items;
 
-		urls = options.urls;
+		// urls = options.urls;
 		index = options.index;
 		var first = true,
 			html;
@@ -372,14 +382,14 @@ function getMagnet(e) {
 		var brokenLink = function (link = "") {
 			console.log(link);
 
-			message(item.title + " " + item.episode + " not links found @ " + options.urls[index]);
+			message(item.title + " " + item.episode + " not found @ " + cleanURL(urls[index]));
 
 			index = first && first != 0 ? 0 : index + 1;
 			first = false;
 			if (index < urls.length)
 				testUrls();
 			else {
-				message("None of the links seem to be working, please try again later or replace them manually in options.");
+				message("No links were found right now, please try again later!");
 				hideLoader($this, loader);
 
 				// goto next magnet as we couldn't find any links
@@ -391,7 +401,7 @@ function getMagnet(e) {
 		var resumeWork = function () {
 			if (item.download()) {
 
-				download(item.download());
+				download(item.download(), item.title + " " + item.episode);
 
 				if (options.check)
 					$('input:not(:checked)', item.get()).click();
@@ -439,15 +449,17 @@ function getMagnet(e) {
 
 					if (item.download()) {
 
-						download(item.download());
+						download(item.download(), item.title + " " + item.episode);
 						// console.log("Downloading: " + item.download());
 
 						if (options.check)
 							$('input:not(:checked)', item.get()).click();
 
 						refreshNotification();
-					} else
-						message(item.title + " " + item.episode + " not found, please try again later!");
+					} else {
+						brokenLink('No links found @' + cleanURL(urls[index]));
+						// message(item.title + " " + item.episode + " not found, please try again later!");
+					}
 
 					hideLoader($this, loader);
 
@@ -470,10 +482,10 @@ function getNextMagnet() {
 }
 
 function cleanURL(url) {
-	return url.replace(/https{0,1}:\/\//, '')
+	return (url || '').replace(/https{0,1}:\/\//, '');
 }
 
-function download(url) {
+function download(url, title = '') {
 	if (!downloading) {
 		downloading = true;
 		// console.log(url);
@@ -483,11 +495,14 @@ function download(url) {
 			dl.opener.focus();
 		});
 		setTimeout(function () {
-			dl.close();
+			dl.document.title = title;
 			downloading = false;
 		}, 200);
-	} else
-		setTimeout(download, 250, url);
+	} else {
+		setTimeout(function () {
+			download(url, title)
+		}, 250);
+	}
 }
 
 function stripShit(data) {

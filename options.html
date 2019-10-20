@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<script src="libs/jquery-3.3.1.min.js"></script>
 	<link rel="stylesheet" type="text/css" href="options.css">
 </head>
+
 <body>
 	<img class="logo" src="images/logo-tpb-ec.svg?v=0.1" />
 	<div class="container">
 		<div class="left">
 			<div class="options">
 				<div class="title">Options</div>
-				
+
 				<div class="divider horizontal"></div>
-				
+
 				<span class="sub">Prefered quality?</span>
 				<form class="radios quality change" id="quality">
 					<input type="radio" name="quality" id="r2" value="2"> 1080p<br>
@@ -20,14 +22,14 @@
 					<input type="radio" name="quality" id="r0" value="0"> Standard
 				</form>
 				<p class="description">This will give the prefered if available, if not it will give 720p if 1080p, 1080p if 720p is not available and then Standard otherwise. Also be aware that if ONLY a higher quaility is available and you have selected a lower quaility, it will give you the better link.</p>
-				
+
 				<div class="divider horizontal"></div>
-				
+
 				<input type="checkbox" class="change" id="hevc" checked> Allow HEVC (x265)?
 				<p class="description">If this is true, it will be preferred over non-hevc but will still defer to non-hevc if none exist. Also if this is set to false, it will never give you hevc, even if it is the only one that exists.</p>
-				
+
 				<div class="divider horizontal"></div>
-				
+
 				<input type="checkbox" class="change" id="check" checked> Auto set as watched?
 				<p class="description">This option will, if the link is available, set the episode as watched!</p>
 			</div>
@@ -35,19 +37,24 @@
 				<div id="save">SAVE</div>
 			</div>
 		</div>
-		
+
 		<div class="divider vertical"></div>
-		
+
 		<div class="right">
-			<div class="title">TPB Proxies<div id="add-proxy">ADD</div></div>
-			
+			<div class="title">TPB Proxies
+				<div id="add-proxy">
+					<!-- ADD -->
+				</div>
+			</div>
+
 			<div class="divider horizontal"></div>
-			
-			<div id="proxies"></div>
+
+			<div id="proxies">Proxies are now collected automatically!</div>
 		</div>
-		
+
 		<span class="status" style="display:none">Options updated...</span>
 	</div>
 </body>
 <script src="options.js"></script>
+
 </html>
