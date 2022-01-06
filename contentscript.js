@@ -1,9 +1,14 @@
-var _e = {
-		ep: {},
-		day: {}
-	},
+console.log = function() { };
+
+/**
+ * Variables used throughout the script
+ */
+let _e = {
+	ep: {},
+	day: {}
+},
 	changed = false,
-	urls,
+	url = 'https://www.ettvdl.com', // TODO: find, check and get proxies
 	options,
 	msgTimer,
 	epList,
@@ -12,58 +17,65 @@ var _e = {
 	index,
 	testTime,
 	oldHref = 'old',
-	openTPB = new RegExp('1MtrxZFWz3FG9MobYWzxR2tRq4ybWJahmb', 'i'),
 	magnetList = [],
-	gettingMagnet = false;
+	dlList = [],
+	gettingMagnet = false,
+	dIndex = 0;
 
-$(function () {
+/**
+ * Document ready
+ */
+$(() => {
 
-	chrome.runtime.sendMessage({
-		proxies: true
-	}, function (data) {
-		urls = data;
-
-		// reset the index to start traversing the proxies
-		// at as we have a new list to work through
-		chrome.storage.sync.set({
-			index: 0
-		});
-	});
+	// chrome.runtime.sendMessage({
+	// 	proxies: true
+	// }, function(data) {
+	// 	url = data;
+	// });
 
 	addListener();
 
 	$('<div />', {
-		'class': 'app-message-box'
+		class: 'app-message-box'
 	}).appendTo($('body'));
 
 	changeInterval();
 });
 
+/**
+ * Displays a message on the bottom of the page
+ * 
+ * @param {string} text The message to display
+ * @returns {void}
+ */
 function message(text) {
-	var mb = $('.app-message-box');
+	const mb = $('.app-message-box');
 	mb.text(text).addClass('active');
 
 	if (msgTimer)
 		clearTimeout(msgTimer);
 
-	msgTimer = setTimeout(function () {
+	msgTimer = setTimeout(function() {
 		mb.removeClass('active');
 	}, 10000);
 }
 
+/**
+ * Adds listeners to detect page changes and button clicks
+ */
 function addListener() {
 
-	$('a[href!=""]').off('click').on('click', function (e) {
+	$('a[href!=""]').off('click').on('click', function(e) {
 
 		if ('https://episodecalendar.com' + $(this).attr('href') != oldHref)
 			changeInterval();
 		addListener();
 	});
 
-	var cls = '.epic-episode-marker-wrapper';
-	$('body').off('click', cls).on('click', cls, function () {
+	const cls = '.epic-episode-marker-wrapper';
+	$('body').off('click', cls).on('click', cls, function() {
 
-		var box = $(this).closest('.calendar-day');
+		const box = $(this).closest('.calendar-day');
 		if ($('input:not(:checked)', box).length)
 			$('.calendar_date', box).removeClass('seen');
 		else
@@ -73,9 +85,12 @@ function addListener() {
 	});
 }
 
+/**
+ * Sets an interval to recheck the episodes loaded on the page
+ */
 function changeInterval() {
-	var oldBody = $('body')[0];
-	var int = setInterval(function () {
+	let oldBody = $('body')[0];
+	const int = setInterval(function() {
 		if (window.location.href != oldHref && $('body')[0] == oldBody) {
 			check();
 			clearInterval(int);
@@ -84,18 +99,21 @@ function changeInterval() {
 	}, 1000);
 }
 
+/**
+ * Checks and adds magnets creating the episode object
+ */
 function check() {
-
 	oldHref = window.location.href;
 
-	var now = new Date();
+	console.log('checking');
+
+	const now = new Date();
 	now.setHours(23, 59, 59);
-	dayList = [],
-		cls = '.epic-episode-marker-wrapper input:not(:checked)';
+	dayList = [];
 
 	if ($('body').hasClass('calendar')) {
 
-		var id = $('td.month h2').first().text() + "_" + $('p.year').first().text();
+		const id = $('td.month h2').first().text() + "_" + $('p.year').first().text();
 
 		if (!_e.ep[id])
 			_e.ep[id] = [];
@@ -109,36 +127,34 @@ function check() {
 
 			epList.length = 0;
 
-			$('.episode-item').each(function (i, el) {
+			$('.episode-item').each(function(i, el) {
 
-				ep = new episode();
-
-				ep.id = $(this).attr('id');
-				ep.title = $(this).find('.show').text();
-				ep.episode = $(this).find('.episode').text().match(/\((S\d+E\d+)\)/)[1];
-				ep.checked = $(this).hasClass('seen');
-				ep.released = $(this).find('input').length > 0;
-
-				epList.push(ep);
+				epList.push(new Episode({
+					id: $(this).attr('id'),
+					title: $(this).find('.show').text(),
+					episode: $(this).find('.episode').text().match(/\((S\d+E\d+)\)/)[1],
+					checked: $(this).hasClass('seen'),
+					released: $(this).find('input').length > 0
+				}));
 			});
 
-			$('.calendar_cell_content').each(function (i, el) {
+			$('.calendar_cell_content').each(function(i, el) {
 
-				var d = new day();
-
-				d.id = $(this).attr('id');
-				d.released = $('input', this).length > 0;
+				const day = new Day({
+					id: $(this).attr('id'),
+					released: $('input', this).length > 0
+				});
 
 				if ($('input:not(:checked)', this).length == 0)
-					d.head().addClass('seen');
+					day.head().addClass('seen');
 
-				dayList.push(d);
+				dayList.push(day);
 			});
 		}
 
 	} else if ($('body').hasClass('unwatched')) {
 
-		var id = $('.cached-view:visible').attr('id');
+		const id = $('.cached-view:visible').attr('id');
 		if (!_e.ep[id])
 			_e.ep[id] = [];
 		epList = _e.ep[id];
@@ -147,15 +163,15 @@ function check() {
 
 			epList.length = 0;
 
-			$('.cached-view:visible .season').each(function (i, el) {
-				var season = $(this),
-					title = season.find('h2').find('a').text().match(/(.*) - Season \d/)[1];
+			$('.cached-view:visible .season').each(function(i, el) {
+				const season = $(this),
+					title = season.find('h2').find('a').text().match(/(.*) - Season \d/)[1].replace(/[,.-]/, '');
 
 				$('<div />', {
 					'class': 'separator'
 				}).appendTo($('.epic-list-episode', this));
 
-				var box = $('<div />', {
+				const box = $('<div />', {
 					'class': 'magnet-container center'
 				}).appendTo($('.epic-list-episode', this));
 
@@ -163,24 +179,58 @@ function check() {
 					'class': 'grey margin_bottom_mini'
 				}).text('Magnet').appendTo(box);
 
-				$('.epic-list-episode', this).each(function (j, eli) {
-					var ep = new episode();
+				$('.epic-list-episode', this).each(function() {
 
-					ep.id = $(this).attr('id');
-					ep.title = title;
-					ep.episode = $(this).find('.mid_grey').find('strong').text();
-					ep.checked = false;
+					const date = $(this).find('.date').find('strong').text();
 
-					var date = $(this).find('.date').find('strong').text();
-					ep.released = new Date(date).getTime() < now.getTime();
-
-					epList.push(ep);
+					epList.push(new Episode({
+						id: $(this).attr('id'),
+						title: title,
+						episode: $(this).find('.mid_grey').find('strong').text(),
+						checked: false,
+						released: new Date(date).getTime() < now.getTime()
+					}));
 				});
 			});
 		}
 	} else if ($('body').hasClass('show')) {
 
-		var id = $('.cached-view:visible').attr('id');
+		if ($('.description').length == 0) {
+
+			// Add a description to the top of the page
+			const lang = {
+				en: 'eng',
+				br: 'por',
+				de: 'deu',
+				dk: 'dan',
+				es: 'spa',
+				fr: 'fra',
+				gr: 'eng',
+				it: 'ita',
+				nl: 'nld',
+				pl: 'pol',
+				pt: 'por',
+				ro: 'eng',
+				rs: 'eng',
+				ru: 'rus',
+				se: 'swe',
+				tu: 'tur'
+			},
+				lRef = lang[$('#logo').attr('href').replace('/', '')];
+
+			const tvLink = $('.links a:nth-of-type(2)').attr('href').replace(/https{0,1}/, 'https');
+			chrome.runtime.sendMessage({
+				url: tvLink
+			}, function(data) {
+
+				$('.page-container.pad_top .col-24').before($('<p />', {
+					class: 'description',
+					text: $(`#translations div[data-language=${lRef}] p:nth-of-type(1)`, data.success).text()
+				}));
+			});
+		}
+
+		const id = $('.cached-view:visible').attr('id');
 		if (!_e.ep[id])
 			_e.ep[id] = [];
 		epList = _e.ep[id];
@@ -193,7 +243,7 @@ function check() {
 				'class': 'separator'
 			}).appendTo($('.cached-view:visible .epic-list-episode'));
 
-			var box = $('<div />', {
+			const box = $('<div />', {
 				'class': 'magnet-container center'
 			}).appendTo($('.cached-view:visible .epic-list-episode'));
 
@@ -201,54 +251,56 @@ function check() {
 				'class': 'grey margin_bottom_mini'
 			}).text('Magnet').appendTo(box);
 
-			title = $('.show_banner').find('h1').text();
+			const title = $('.show_banner').find('h1').text().replace(/[,.-]/, '');
 
-			$('.cached-view:visible .epic-list-episode').each(function (i, el) {
-				var ep = new episode();
+			$('.cached-view:visible .epic-list-episode').each(function() {
 
-				ep.id = $(this).attr('id');
-				ep.title = title;
-				ep.episode = $(this).find('.mid_grey').find('strong').text();
+				const $check = $(this).find('.epic-episode-marker'),
+					date = $(this).find('.date').find('strong').text();
 
-				var check = $(this).find('.epic-episode-marker');
-				ep.checked = check.length && check.checked;
-
-				var date = $(this).find('.date').find('strong').text();
-				ep.released = new Date(date).getTime() < now.getTime();
-
-				epList.push(ep);
+				epList.push(new Episode({
+					id: $(this).attr('id'),
+					title: title,
+					episode: $(this).find('.mid_grey').find('strong').text(),
+					checked: $check.length && $check.checked,
+					released: new Date(date).getTime() < now.getTime()
+				}));
 			});
 		}
 	}
 
-	$.each(epList, function (i, item) {
+	$.each(epList, function(i, item) {
+
+		// console.log(item);
 
 		if (!item.get().hasClass('magnetized') && item.released) {
 
-			var box = item.get().find('.magnet-container');
-			magnet = $('<div />', {
-				'class': box.length ? 'big magnet' : 'magnet',
-				'title': 'Download!'
-			}).attr('index', i).appendTo(box.length ? box : item.get());
+			const box = item.get().find('.magnet-container'),
+				magnet = $('<div />', {
+					class: box.length ? 'big magnet' : 'magnet',
+					title: 'Download!'
+				}).attr('index', i).appendTo(box.length ? box : item.get());
 
 			magnet.on('click', addToQueue);
+
 			$('<div />', {
 				'class': 'loader'
 			}).hide().appendTo(magnet);
 
 			item.get().addClass('magnetized');
 
-		} else if (!item.released)
+		} else if (!item.released) {
 			item.get().find('.magnet-container .grey').css('opacity', 0);
+		}
 	});
 
-	$.each(dayList, function (i, item) {
+	$.each(dayList, function(i, item) {
 
 		if (!item.get().hasClass('magnetized') && item.released) {
 
-			var magnet = $('<div />', {
-				'class': 'magnet',
-				'title': 'Download all unwatched from day!'
+			const magnet = $('<div />', {
+				class: 'magnet',
+				title: 'Download all unwatched from day!'
 			}).attr('index', i).appendTo(item.head());
 			magnet.on('click', getDayMagnets);
 
@@ -258,10 +310,10 @@ function check() {
 
 	if (!$('#menu').hasClass('magnetized')) {
 
-		var magnet = $('<li />', {
+		const magnet = $('<li />', {
 			'class': 'download-all'
 		}).appendTo($('#menu'));
-		var a = $('<a />', {
+		const a = $('<a />', {
 			'id': 'download-btn',
 			'href': ''
 		}).text('Download all').appendTo(magnet);
@@ -278,29 +330,43 @@ function check() {
 	addListener();
 }
 
+/**
+ * Function for when the download all button is clicked
+ * 
+ * @param {object} e Handler event
+ */
 function getAllMagnets(e) {
 	e.preventDefault();
-	$.each(epList, function (i, item) {
+	$.each(epList, function(i, item) {
 		if ($('input:not(:checked)', item.get()).length)
 			addToQueue.call($('.magnet', item.get()).get(0));
 	});
 }
 
+/** 
+ * Function for when the magnet on the day is clicked
+ * 
+ * @param {object} e Handler event
+ */
 function getDayMagnets(e) {
 
-	var item = dayList[$(this).attr('index')];
+	let item = dayList[$(this).attr('index')];
 
-	$('.magnet', item.get()).each(function (i, el) {
+	$('.magnet', item.get()).each(function(i, el) {
 
-		var item = epList[$(this).attr('index')];
+		item = epList[$(this).attr('index')];
 
 		if (!$('input', item.get()).is(':checked'))
 			addToQueue.call($('.magnet', item.get()).get(0));
 	});
 }
 
+/**
+ * Sets the number next to the download all button
+ */
 function refreshNotification() {
-	setTimeout(function () {
+	const cls = '.epic-episode-marker-wrapper input:not(:checked)';
+	setTimeout(function() {
 		if ($('body').hasClass('calendar'))
 			$('#dl-count').text($(cls).length);
 		else
@@ -308,10 +374,13 @@ function refreshNotification() {
 	}, 1000);
 }
 
-// the way chrome has changed requires us to queue 
-// downloads rather than doing all at once
+/** 
+ * Creates and moves through the queue getting magnets
+ *
+ * the way chrome has changed requires us to queue 
+ * downloads rather than doing all at once
+ */
 function addToQueue() {
-
 	$(this).off('click');
 	epList[$(this).attr('index')].get().find('.loader').fadeIn('250');
 
@@ -320,12 +389,27 @@ function addToQueue() {
 	getMagnet.call(epList[magnetList[0]].get().find('.magnet'));
 }
 
+/**
+ * Add an item to the download queue and try and download it
+ * 
+ * @param {Object} item The item to add
+ */
+function toDLQueue(item) {
+	dlList.push(item);
+	download();
+}
+
+/**
+ * Gets the magnet from the given episode.
+ * 
+ * @param {object} e Handler event
+ */
 function getMagnet(e) {
 
 	if (gettingMagnet) return;
 	gettingMagnet = true;
 
-	var $this = $(this),
+	const $this = $(this),
 		item = epList[$(this).attr('index')],
 		loader = item.get().find('.loader');
 
@@ -333,75 +417,72 @@ function getMagnet(e) {
 		quality: 1,
 		hevc: true,
 		check: true,
-		// urls: urls,
-		index: 0
-	}, function (items) {
+		index: 0,
+		clicked: false
+	}, function(items) {
 		options = items;
 
 		// urls = options.urls;
 		index = options.index;
-		var first = true,
-			html;
+		let html;
 
-		var testUrls = function () {
+		console.log(item.getETTV());
 
-			chrome.runtime.sendMessage({
-				url: urls[index]
-			}, function (a) {
-				// console.log(a);
+		chrome.runtime.sendMessage({
+			url: item.getETTV()
+		}, function(data) {
 
-				if ($.type(a.success) === "string") {
-					var b = a.success.bMatch(openTPB);
+			if (data.error) {
+				// TODO: Add error message
+				console.error('Something went wrong getting the magnet');
 
-					chrome.runtime.sendMessage({
-						url: item.getQuery(b)
-					}, function (data) {
-
-						if (data.error) {
-							brokenLink("Broken: " + cleanURL(item.getQuery(b)));
-
-						} else {
-							html = data.success;
-							// console.log("search: " + data.bMatch(/value="Pirate Search"/i));
-							if ($.type(data.success) === "string" && data.success.bMatch(/value="Pirate Search"/i) && $('.detLink', $(stripShit(data.success))).length > 3) {
-								chrome.storage.sync.set({
-									index: index
-								});
-								console.log("Found links @: " + cleanURL(item.getQuery(b)));
-								resumeWork();
-							} else
-								brokenLink("No links found @: " + cleanURL(item.getQuery(b)));
-						}
-					});
-				} else
-					brokenLink("Broken: " + cleanURL(urls[index]));
-
-			});
-		}
-
-		var brokenLink = function (link = "") {
-			console.log(link);
-
-			message(item.title + " " + item.episode + " not found @ " + cleanURL(urls[index]));
-
-			index = first && first != 0 ? 0 : index + 1;
-			first = false;
-			if (index < urls.length)
-				testUrls();
-			else {
-				message("No links were found right now, please try again later!");
 				hideLoader($this, loader);
-
-				// goto next magnet as we couldn't find any links
 				getNextMagnet();
+
+			} else {
+				html = data.success;
+
+				if (typeof html === "string" && html.bMatch(/<title>Advanced Search | ETTV Torrents | Official<\/title>/i)) {
+					resumeWork();
+
+				} else {
+					// TODO: Add error message
+					console.error('Something went wrong with the verification of the data');
+
+					hideLoader($this, loader);
+					getNextMagnet();
+				}
 			}
+		});
 
-		}
+		// let brokenLink = function (link = "") {
+		// 	console.log(link);
 
-		var resumeWork = function () {
+		// 	message(item.title + " " + item.episode + " not found @ " + cleanURL(urls[index]));
+
+		// 	index = first && first != 0 ? 0 : index + 1;
+		// 	first = false;
+		// 	if (index < urls.length)
+		// 		testUrls();
+		// 	else {
+		// 		message("No links were found right now, please try again later!");
+		// 		hideLoader($this, loader);
+
+		// 		// goto next magnet as we couldn't find any links
+		// 		getNextMagnet();
+		// 	}
+
+		// }
+
+		const resumeWork = function() {
+
+			console.log('resuming work');
+
 			if (item.download()) {
 
-				download(item.download(), item.title + " " + item.episode);
+				console.log('directly downloading the magnet');
+
+				toDLQueue(item);
 
 				if (options.check)
 					$('input:not(:checked)', item.get()).click();
@@ -412,52 +493,73 @@ function getMagnet(e) {
 				getNextMagnet();
 
 			} else {
-				var data = stripShit(html);
 
-				$('.detLink', data).each(function (i, el) {
-					var href = urls[index] + $(this).attr('href').replace(/https{0,1}:\/\/\w+\.\w+/, '');
+				console.log('stripping the shit and finding the magnet');
 
-					if (href.bMatch(item.getRegex())) {
 
-						if (href.bMatch(/HEVC/i)) {
-							if (href.bMatch(/1080p/i) && !item.m1080HEVC)
-								item.m1080HEVC = href.replace(/(\d+)\/.+$/, '$1');
+				html = stripShit(html);
 
-							else if (href.bMatch(/720p/i) && !item.m720HEVC)
-								item.m720HEVC = href.replace(/(\d+)\/.+$/, '$1');
+				// console.log(html);
 
-						} else if (href.bMatch(/1080p/i) && !item.m1080)
-							item.m1080 = href.replace(/(\d+)\/.+$/, '$1');
+				const dls = {};
 
-						else if (href.bMatch(/720p/i) && !item.m720)
-							item.m720 = href.replace(/(\d+)\/.+$/, '$1');
+				$('.table-bordered tr:has(td)', html).each(function() {
 
-						else if (!item.mStandard)
-							item.mStandard = href.replace(/(\d+)\/.+$/, '$1');
+					const dl = {};
+
+					$(this).children().each(function(i) {
+						if (i == 1) {
+							dl.href = url + $('a[href]', this).attr('href');
+						} else if (i == 3) {
+							dl.size = toMB($(this).text());
+						} else if (i == 5) {
+							dl.seed = +$('b', this).text().replace(',', '');
+						}
+					});
+
+					dl.quality = dl.href.bMatch(/1080p/i) ? '1080' : dl.href.bMatch(/720p/i) ? '720' : 'Standard';
+					dl.hevc = dl.href.bMatch(/HEVC|x265/i);
+
+					const match = `m${dl.quality}${dl.hevc ? 'HEVC' : ''}`;
+
+					if (!dls[match] || (dls[match].seed < dl.seed)) {
+						dls[match] = dl;
+						item[match] = dl.href;
 					}
+
+					// console.log(dl);
 				});
 
+				console.log('%c getLink', 'color: #bada55');
+				console.log(item, item.getType());
+
 				chrome.runtime.sendMessage({
-					getLinks: true,
-					item: item
-				}, function (a) {
-					item.mStandard = a.item.mStandard || '';
-					item.m720 = a.item.m720 || '';
-					item.m1080 = a.item.m1080 || '';
-					item.m720HEVC = a.item.m720HEVC || '';
-					item.m1080HEVC = a.item.m1080HEVC || '';
+					getLink: true,
+					item: item,
+					type: item.getType()
+				}, function(a) {
+
+					console.log(a);
+
+					if (a.error) {
+						hideLoader($this, loader);
+						getNextMagnet();
+
+						return;
+					}
+
+					item[item.getType()] = a.item[item.getType()];
 
 					if (item.download()) {
 
-						download(item.download(), item.title + " " + item.episode);
-						// console.log("Downloading: " + item.download());
+						toDLQueue(item);
 
-						if (options.check)
-							$('input:not(:checked)', item.get()).click();
+						// if (options.check)
+						// 	$('input:not(:checked)', item.get()).click();
 
-						refreshNotification();
+						// refreshNotification();
 					} else {
-						brokenLink('No links found @' + cleanURL(urls[index]));
+						// brokenLink('No links found @' + cleanURL(urls[index]));
 						// message(item.title + " " + item.episode + " not found, please try again later!");
 					}
 
@@ -468,8 +570,6 @@ function getMagnet(e) {
 				});
 			}
 		}
-
-		testUrls();
 	});
 }
 
@@ -481,39 +581,55 @@ function getNextMagnet() {
 		getMagnet.call(epList[magnetList[0]].get().find('.magnet'));
 }
 
+function download() {
+
+	if (downloading) return;
+	downloading = true;
+
+	console.log('downloading', dlList[0].download());
+
+	window.location = dlList[0].download();
+
+	if (options.clicked)
+		setTimeout(() => {
+			downloadNext();
+		}, 1000);
+	else
+		dialogue().fadeIn(800).on('click', function(e) {
+
+			$(this).fadeOut(400);
+			setTimeout(() => {
+				$(this).remove();
+				downloadNext();
+			}, 400);
+		});
+
+	if (options.check)
+		$('input:not(:checked)', dlList[0].get()).click();
+
+	refreshNotification();
+}
+
+function downloadNext() {
+	dlList.shift();
+	downloading = false;
+
+	dlList.length > 0 && download();
+}
+
 function cleanURL(url) {
 	return (url || '').replace(/https{0,1}:\/\//, '');
 }
 
-function download(url, title = '') {
-	if (!downloading) {
-		downloading = true;
-		// console.log(url);
-
-		var dl = window.open(url, '_blank');
-		$(dl).on('onbeforeunload', function () {
-			dl.opener.focus();
-		});
-		setTimeout(function () {
-			dl.document.title = title;
-			downloading = false;
-		}, 200);
-	} else {
-		setTimeout(function () {
-			download(url, title)
-		}, 250);
-	}
-}
-
 function stripShit(data) {
-	return data.replace(/<(style|head|script).{0,}?>[\s\S]+?<\/(style|head|script)>/gi, '')
+	return data.replace(/(<head.*?>[\s\S]*?<\/head>|<script.*?>[\s\S]*?<\/script>|<style.*?>[\s\S]*?<\/style>)/gi, '')
 		.replace(/<(link|img|meta).+?>/gi, '');
 }
 
 // function getLink(item, part) {
 // 	console.log(item[part], isValid( item[part]));
 // 	if (isValid(item[part])) {
-// 		var rVal = true;
+// 		let rVal = true;
 
 // 		chrome.runtime.sendMessage({
 // 			url: item[part]
@@ -531,8 +647,8 @@ function stripShit(data) {
 // 		return false;
 // }
 
-function isValid(url) {
-	return /^(https?|s?ftp):\/\/(((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:)*@)?(((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5]))|((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?)(:\d*)?)(\/((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)+(\/(([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)*)*)?)?(\?((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|[\uE000-\uF8FF]|\/|\?)*)?(#((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|\/|\?)*)?$/i.test(url);
+function isValid(link) {
+	return /^(https?|s?ftp):\/\/(((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:)*@)?(((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5]))|((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?)(:\d*)?)(\/((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)+(\/(([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)*)*)?)?(\?((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|[\uE000-\uF8FF]|\/|\?)*)?(#((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|\/|\?)*)?$/i.test(link);
 }
 
 function hideLoader(el, loader) {
@@ -540,45 +656,55 @@ function hideLoader(el, loader) {
 	loader.fadeOut('250');
 }
 
-function episode(data) {
-	this.id;
-	this.title;
-	this.episode;
-	this.checked;
-	this.released;
+class Episode {
+	id;
+	title;
+	episode;
+	checked;
+	released;
 
-	this.m1080;
-	this.m1080HEVC;
-	this.m720;
-	this.m720HEVC;
-	this.mStandard;
+	m1080;
+	m1080HEVC;
+	m720;
+	m720HEVC;
+	mStandard;
 
-	this.get = function () {
+	replaces = [{
+		from: /(!|\'|\(\d+\)|\& )/g,
+		to: ''
+	}, {
+		from: /the inhumans/i,
+		to: 'inhumans'
+	}];
+
+	constructor(data) {
+		for (const key in data)
+			this[key] = data[key];
+	}
+
+	get() {
 		return $('#' + this.id);
-	};
+	}
 
-	this.getTitle = function () {
-		return $.trim(this.title.replace(/the inhumans/i, 'Inhumans').replace(/('s|'|\(\d+\)|\& )/g, ''));
-	};
+	getTitle() {
+		let title = this.title;
+		for (const replace of this.replaces) {
+			title = title.replace(replace.from, replace.to);
+		}
+		return $.trim(title);
+	}
 
-	this.getQuery = function (open = false) {
-		var s = this.getTitle().replace(/ |\./g, '+') + "+" + this.episode;
-		if (open) return urls[index] + '/search/' + s;
-		return urls[index] + '/s/?q=' + s;
-	};
+	getETTV() {
+		const s = this.getTitle().replace(/ |\./g, '+') + "+" + this.episode;
+		return url + '/torrents-search.php?search=' + s;
+	}
 
-	this.getQueryExtra = function (open = false) {
-		var s = this.getTitle().replace(/ |\./g, '+') + "+" + this.episode;
-		if (open) return urls[index] + '/search/' + s;
-		return urls[index] + '/s/?q=' + s + '&category=0&page=0&orderby=99';
-	};
-
-	this.getRegex = function () {
+	getRegex() {
 		return new RegExp(this.getTitle().replace(/ /g, '.+').replace(/S.H.I.E.L.D./, '(S.H.I.E.L.D|SHIELD)') + ".+" + this.episode, 'i');
-	};
+	}
 
-	this.download = function () {
-		var q = options.quality;
+	download() {
+		const q = options.quality;
 
 		if (options.hevc) {
 			if ((q == 2 || (q == 1 && !this.m720HEVC)) && this.m1080HEVC)
@@ -609,24 +735,133 @@ function episode(data) {
 		}
 
 		return undefined;
-	};
+	}
 
-	for (key in data)
-		this[key] = data[key];
+	getType() {
+		let q = options.quality;
+
+		if (options.hevc) {
+			if ((q == 2 || (q == 1 && !this.m720HEVC)) && this.m1080HEVC)
+				return 'm1080HEVC';
+			else if ((q == 1 || q == 2) && this.m720HEVC)
+				return 'm720HEVC';
+		}
+
+		if ((q == 2 || (q == 1 && !this.m720)) && this.m1080)
+			return 'm1080';
+		else if ((q == 1 || q == 2) && this.m720)
+			return 'm720';
+
+		if (this.mStandard)
+			return 'mStandard';
+
+		else if (q == 0) {
+			if (options.hevc) {
+				if (this.m720HEVC)
+					return 'm720HEVC';
+				else if (this.m1080HEVC)
+					return 'm1080HEVC';
+			}
+			if (this.m720)
+				return 'm720';
+			else if (this.m1080)
+				return 'm1080';
+		}
+
+		return undefined;
+	}
 }
 
-function day() {
-	this.id;
-	this.released;
+class Day {
+	id;
+	released;
 
-	this.get = function () {
+	constructor(data) {
+		for (const key in data)
+			this[key] = data[key];
+	}
+
+	get() {
 		return $('#' + this.id);
-	};
+	}
 
-	this.head = function () {
+	head() {
 		return this.get().parent().find('.calendar_date');
-	};
+	}
 }
+
+const dialogue = () => {
+
+	const d = $('<div />', {
+		class: 'app-dialogue',
+		i: dIndex
+	}).appendTo($('body'));
+
+	let dBorder = $('<div />', {
+		class: 'app-dialogue-border'
+	}).appendTo(d);
+
+	$('<span />', {
+		class: 'app-dialogue-click',
+		text: 'Click anywhere to continue the queue!'
+	}).appendTo(dBorder);
+
+	$('<span />', {
+		class: 'app-dialogue-sorry',
+		text: 'This is necessary since chrome updated the way external applications are selected. Without this you can not download in bulk as the rest of the queue would be ignored.'
+	}).appendTo(dBorder);
+
+	$('<span />', {
+		class: 'app-dialogue-click',
+		text: 'or...'
+	}).appendTo(dBorder);
+
+	$('<span />', {
+		class: 'app-dialogue-sorry',
+		text: `If you have the latest version of chrome, you can check the 'Always allow episodecalendar.com...' in the popup dialogue, then check this next box to download in bulk again. Thank you chrome developers.`
+	}).appendTo(dBorder);
+
+	let dLabel = $('<label />', {
+		class: 'app-dialogue-check',
+		for: 'clicked-it'
+	}).appendTo(dBorder);
+
+	let dInput = $('<input />', {
+		class: 'app-dialogue-checkbox',
+		type: 'checkbox',
+		id: 'clicked-it'
+	}).prop('checked', options.clicked).appendTo(dLabel);
+
+	$('<span />', {
+		class: 'app-dialogue-text',
+		text: `I've selected 'Always allow episodecalendar.com to open links...'`
+	}).appendTo(dLabel);
+
+	$('<div />', {
+		class: 'app-dialogue-back mark'
+	}).appendTo(dLabel);
+
+	$('<div />', {
+		class: 'app-dialogue-tick mark'
+	}).appendTo(dLabel);
+
+	dLabel.on('click', function(e) {
+		e.stopPropagation();
+
+		options.clicked = dInput.is(':checked');
+
+		chrome.storage.sync.set({
+			quality: options.quality,
+			hevc: options.hevc,
+			check: options.check,
+			clicked: options.clicked
+		});
+	});
+
+	dIndex++;
+
+	return d;
+};
 
 /*
 A simple jQuery function that can add listeners on attribute change.
@@ -637,17 +872,17 @@ Copyright (C) 2013-2014 Selvakumar Arumugam
 You may use attrchange plugin under the terms of the MIT Licese.
 https://github.com/meetselva/attrchange/blob/master/MIT-License.txt
  */
-(function ($) {
+(function($) {
 	function isDOMAttrModifiedSupported() {
-		var p = document.createElement('p');
-		var flag = false;
+		let p = document.createElement('p');
+		let flag = false;
 
 		if (p.addEventListener) {
-			p.addEventListener('DOMAttrModified', function () {
+			p.addEventListener('DOMAttrModified', function() {
 				flag = true
 			}, false);
 		} else if (p.attachEvent) {
-			p.attachEvent('onDOMAttrModified', function () {
+			p.attachEvent('onDOMAttrModified', function() {
 				flag = true
 			});
 		} else {
@@ -659,12 +894,12 @@ https://github.com/meetselva/attrchange/blob/master/MIT-License.txt
 
 	function checkAttributes(chkAttr, e) {
 		if (chkAttr) {
-			var attributes = this.data('attr-old-value');
+			let attributes = this.data('attr-old-value');
 
 			if (e.attributeName.indexOf('style') >= 0) {
 				if (!attributes['style'])
 					attributes['style'] = {}; //initialize
-				var keys = e.attributeName.split('.');
+				let keys = e.attributeName.split('.');
 				e.attributeName = keys[0];
 				e.oldValue = attributes['style'][keys[1]]; //old value
 				e.newValue = keys[1] + ':' +
@@ -681,12 +916,12 @@ https://github.com/meetselva/attrchange/blob/master/MIT-License.txt
 	}
 
 	//initialize Mutation Observer
-	var MutationObserver = window.MutationObserver ||
+	let MutationObserver = window.MutationObserver ||
 		window.WebKitMutationObserver;
 
-	$.fn.attrchange = function (a, b) {
+	$.fn.attrchange = function(a, b) {
 		if (typeof a == 'object') { //core
-			var cfg = {
+			let cfg = {
 				trackValues: false,
 				callback: $.noop
 			};
@@ -698,9 +933,9 @@ https://github.com/meetselva/attrchange/blob/master/MIT-License.txt
 			}
 
 			if (cfg.trackValues) { //get attributes old value
-				this.each(function (i, el) {
-					var attributes = {};
-					for (var attr, i = 0, attrs = el.attributes, l = attrs.length; i < l; i++) {
+				this.each(function(i, el) {
+					let attributes = {};
+					for (let attr, i = 0, attrs = el.attributes, l = attrs.length; i < l; i++) {
 						attr = attrs.item(i);
 						attributes[attr.nodeName] = attr.value;
 					}
@@ -709,14 +944,14 @@ https://github.com/meetselva/attrchange/blob/master/MIT-License.txt
 			}
 
 			if (MutationObserver) { //Modern Browsers supporting MutationObserver
-				var mOptions = {
+				let mOptions = {
 					subtree: false,
 					attributes: true,
 					attributeOldValue: cfg.trackValues
 				};
-				var observer = new MutationObserver(function (mutations) {
-					mutations.forEach(function (e) {
-						var _this = e.target;
+				let observer = new MutationObserver(function(mutations) {
+					mutations.forEach(function(e) {
+						let _this = e.target;
 						//get new value if trackValues is true
 						if (cfg.trackValues) {
 							e.newValue = $(_this).attr(e.attributeName);
@@ -728,12 +963,12 @@ https://github.com/meetselva/attrchange/blob/master/MIT-License.txt
 				});
 
 				return this.data('attrchange-method', 'Mutation Observer')
-					.data('attrchange-obs', observer).each(function () {
+					.data('attrchange-obs', observer).each(function() {
 						observer.observe(this, mOptions);
 					});
 			} else if (isDOMAttrModifiedSupported()) { //Opera
 				//Good old Mutation Events
-				return this.data('attrchange-method', 'DOMAttrModified').on('DOMAttrModified', function (event) {
+				return this.data('attrchange-method', 'DOMAttrModified').on('DOMAttrModified', function(event) {
 					if (event.originalEvent) {
 						event = event.originalEvent;
 					} //jQuery normalization is not required 
@@ -744,7 +979,7 @@ https://github.com/meetselva/attrchange/blob/master/MIT-License.txt
 					}
 				});
 			} else if ('onpropertychange' in document.body) { //works only in IE		
-				return this.data('attrchange-method', 'propertychange').on('propertychange', function (e) {
+				return this.data('attrchange-method', 'propertychange').on('propertychange', function(e) {
 					e.attributeName = window.event.propertyName;
 					//to set the attr old value
 					checkAttributes.call($(this), cfg.trackValues, e);
@@ -762,12 +997,21 @@ https://github.com/meetselva/attrchange/blob/master/MIT-License.txt
 })(jQuery);
 
 if (!String.prototype.bMatch) {
-	String.prototype.bMatch = function (regExp) {
-		var s = this.toString();
+	String.prototype.bMatch = function(regExp) {
+		let s = this.toString();
 
 		if (s.match(regExp) === null)
 			return false;
 
 		return true;
+	}
+}
+
+function toMB(str) {
+	if (str.includes(' MB'))
+		return Math.round(+str.replace(' MB', ''));
+	else {
+		let n = +str.replace(' GB', '');
+		return Math.round(n * 1024);
 	}
 }

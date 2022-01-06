@@ -1,44 +1,45 @@
 .magnet {
-	position: relative;
-	width: 12px;
-	float: right;
-	cursor: pointer;
-	
-	.loader {
-		position: absolute;
-		top: -4px;
-	    left: -4px;
-	}
-	
-	&.big {
-	    float: initial;
-	    width: 18px;
-	    
-	    .loader {
-	    	width: 22px;
-	    	height: 22px;
-	    }
-	}
-	
-	&::before {
-		content: url('https://the-division-map.com/images/icon-magnet.svg?v=0.3');
-	}
-	
-	&.all {
-		position: absolute;
-		top: 5px;
-		right: 5px;
-		width: 30px;
-	}
+    position: relative;
+    width: 12px;
+    float: right;
+    cursor: pointer;
+
+    .loader {
+        position: absolute;
+        top: -4px;
+        left: -4px;
+    }
+
+    &.big {
+        float: initial;
+        width: 18px;
+
+        .loader {
+            width: 22px;
+            height: 22px;
+        }
+    }
+
+    &::before {
+        content: url("chrome-extension://__MSG_@@extension_id__/images/icon-magnet.svg");
+    }
+
+    &.all {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        width: 30px;
+    }
 }
 
 .seen {
-	.magnet {
-		&::before {
-			content: url('https://the-division-map.com/images/icon-magnet-disable.svg?v=0.3');
-		}
-	}
+    .magnet {
+        &::before {
+            content: url("chrome-extension://__MSG_@@extension_id__/images/icon-magnet-disable.svg");
+        }
+    }
 }
+
 .app-message-box {
     position: fixed;
     left: 180px;
@@ -51,9 +52,109 @@
     text-align: center;
     font-size: 16pt;
     transition: all 1.2s ease;
-    
+
     &.active {
-    	bottom: 0;
-    	transition: all .7s ease;
+        bottom: 0;
+        transition: all .7s ease;
     }
+}
+
+.app-message-box {
+    position: fixed;
+    left: 180px;
+    right: 0;
+    bottom: -80px;
+    height: 80px;
+    background: #de6e6e;
+    line-height: 80px;
+    color: white;
+    text-align: center;
+    font-size: 16pt;
+    transition: all 1.2s ease;
+
+    &.active {
+        bottom: 0;
+        transition: all .7s ease;
+    }
+}
+
+.app-dialogue {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(#333, 0.9);
+    z-index: 9999999;
+    display: none;
+
+    .app-dialogue-border {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        padding: 20px;
+        transform: translate(-50%, -50%);
+        border: darkgray 2px solid;
+        background: #333;
+    }
+
+    span {
+        display: block;
+    }
+
+    .app-dialogue-click {
+        font-size: 24pt;
+        color: lightgray;
+        margin-bottom: 10px;
+    }
+
+    .app-dialogue-sorry {
+        font-size: 16pt;
+        color: gray;
+        margin-bottom: 10px;
+    }
+
+    label.app-dialogue-check {
+        display: grid;
+        grid-template-columns: 25px 1fr;
+        grid-column-gap: 2px;
+        grid-template-areas: "mark text";
+        cursor: pointer;
+
+        input {
+            display: none;
+        }
+
+        .mark {
+            grid-area: mark;
+            width: 25px;
+            height: 25px;
+        }
+
+        .app-dialogue-back {
+            background-image: url("chrome-extension://__MSG_@@extension_id__/images/menu-checkbox.svg");
+        }
+
+        .app-dialogue-tick {
+            background-image: url("chrome-extension://__MSG_@@extension_id__/images/menu-checktick.svg");
+            transform: scale(0);
+            transition: transform .3s ease;
+        }
+
+        input:checked ~ .app-dialogue-tick {
+            transform: scale(1);
+        }
+
+        .app-dialogue-text {
+            grid-area: text;
+            font-size: 16px;
+            line-height: 25px;
+            color: lightgray;
+        }
+    }
+}
+
+.description {
+    display: inline-block;
+    font-size: 14px;
 }

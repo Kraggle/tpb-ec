@@ -1,12 +1,12 @@
 {
-	"name": "The Pirate Bay links for Episode Calendar",
-	"version": "1.2.1",
-	"description": "Almost instant magnet links, uses Pirate Bay proxies to find links based on your preferences.",
+	"name": "Torrent Links for Episode Calendar",
+	"version": "1.5",
+	"description": "Almost instant magnet links, uses torrent sites to find links based on your preferences.",
 	"permissions": [
-		"tabs",
-		"activeTab",
-		"declarativeContent",
-		"storage"
+		"storage",
+		"https://*.com/",
+		"http://ettvproxies.com/",
+		"https://www.thetvdb.com/"
 	],
 	"background": {
 		"scripts": [

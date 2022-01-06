@@ -1,3 +1,5 @@
+console.log = function() { };
+
 // chrome.runtime.onInstalled.addListener(function() {
 // 	chrome.storage.sync.set({color: '#3aa757'}, function() {
 // 		console.log("The color is green.");
@@ -29,19 +31,38 @@ const newTab = (url) => {
 	})
 }
 
-var item, CORS = 'https://cors-anywhere.herokuapp.com/';
+const proxies = 'http://ettvproxies.com/';
+let item;
 
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+
+	console.log(request);
 
 	if (request.getLinks && request.item) {
 
 		item = request.item;
 
 		$.when(getLink(item, 'mStandard'), getLink(item, 'm1080'), getLink(item, 'm1080HEVC'),
-				getLink(item, 'm720'), getLink(item, 'm720HEVC'))
-			.done(function (a1, a2, a3, a4, a5) {
+			getLink(item, 'm720'), getLink(item, 'm720HEVC'))
+			.done(function(a1, a2, a3, a4, a5) {
 
-				console.log(item);
+				// console.log(item);
+
+				sendResponse({
+					item: item
+				})
+			});
+
+	} else if (request.getLink && request.item && request.type) {
+
+		item = request.item;
+
+		// console.log(item);
+
+		$.when(getLink(item, request.type))
+			.done(function() {
+
+				// console.log(item);
 
 				sendResponse({
 					item: item
@@ -50,15 +71,23 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
 	} else if (request.url) {
 
+		console.log('doing url', request.url);
+
 		$.ajax({
-			url: CORS + request.url
-		}).done(function (a) {
+			type: 'GET',
+			url: request.url
+		}).done(function(a) {
+
+			// console.log('url success', a);
 
 			sendResponse({
 				success: a
 			});
 
-		}).fail(function () {
+		}).fail(function() {
+
+			console.log('url error');
+
 			sendResponse({
 				error: true
 			});
@@ -67,41 +96,50 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	} else if (request.proxies) {
 
 		$.ajax({
-			url: `${CORS}https://proxybaylist.org/`,
-		}).done(function (a) {
+			url: proxies,
+		}).done(function(a) {
 
-			var html = $.parseHTML(a);
-			var proxies = [];
+			let html = $.parseHTML(a);
+			let proxy = [];
 
-			$("#torrents div p a", html).each(function (i, el) {
-				proxies.push($(this).attr("href").replace(/\/$/, ''));
+			$("table.proxies td a", html).each(function() {
+				proxy.push($(this).attr("href").replace(/\/$/, ''));
+				console.log($(this));
 			});
 
-			sendResponse(proxies);
+			sendResponse(proxy[0]);
 		});
 
+	} else {
+		sendResponse({
+			error: true
+		});
 	}
 
 	return true;
 })
 
 function getLink(item, part) {
-	// console.log(item[part], isValid(item[part]));
+	// console.log(item[part]);
 
 	return isValid(item[part]) ? $.ajax({
-		url: CORS + item[part]
-	}).done(function (data) {
+		url: item[part]
+	}).done(function(data) {
 
-		console.log(stripShit(data));
-
-		item[part] = $.type(data) === 'string' ? $('.download a', stripShit(data)).first().attr('href') : '';
+		item[part] = typeof data === 'string' ? $('[href^=magnet]', data).attr('href') : '';
 
 	}) : false;
 
 }
 
 function isValid(url) {
-	return /^(https?|s?ftp):\/\/(((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:)*@)?(((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5]))|((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?)(:\d*)?)(\/((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)+(\/(([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)*)*)?)?(\?((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|[\uE000-\uF8FF]|\/|\?)*)?(#((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|\/|\?)*)?$/i.test(url);
+	let pattern = new RegExp('^(https?:\\/\\/)?' + // protocol
+		'((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
+		'((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+		'(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+		'(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+		'(\\#[-a-z\\d_]*)?$', 'i'); // fragment locator
+	return !!pattern.test(url);;
 }
 
 function stripShit(data) {
